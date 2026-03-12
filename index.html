@@ -1,449 +1,130 @@
-<!DOCTYPE html>
-
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>SomaliTutor</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body,#app{height:100%;}
-body{font-family:'DM Sans',sans-serif;background:#f0f4f8;color:#1e293b;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
-@keyframes slideRight{from{opacity:0;transform:translateX(-14px);}to{opacity:1;transform:translateX(0);}}
-.fade-up{animation:fadeUp 0.45s ease forwards;}
-.slide-right{animation:slideRight 0.4s ease forwards;}
-input,select,button{font-family:'DM Sans',sans-serif;}
-input:focus,select:focus{outline:none;border-color:#2563eb!important;box-shadow:0 0 0 3px rgba(37,99,235,0.12);}
-::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
-.card{transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;}
-.card:hover{border-color:#93c5fd!important;box-shadow:0 4px 18px rgba(37,99,235,0.1)!important;transform:translateY(-2px);}
-.nav-item{transition:background 0.12s;}
-.nav-item:hover{background:#f8fafc!important;}
-.btn-primary{transition:opacity 0.15s,transform 0.1s;}
-.btn-primary:hover{opacity:0.9;transform:translateY(-1px);}
-.pill{transition:background 0.15s,color 0.15s;}
-</style>
-</head>
-<body>
-<div id="app"></div>
-<script type="module">
-import { h, render } from 'https://esm.sh/preact@10.19.2';
-import { useState, useMemo } from 'https://esm.sh/preact@10.19.2/hooks';
-import { html } from 'https://esm.sh/htm@3.1.1/preact';
-
-// ── DATA ─────────────────────────────────────────────────
-const TUTORS = [
-{id:1,  name:“Teacher Khadra”,     rating:4.9,reviews:142,language:“Somali”, price:15,subject:“Quran”,          color:”#1a4a7a”,bio:“Certified Quran teacher with 8 years experience. Specializes in Tajweed and Hifz for all ages.”,students:230,lessons:1840,badge:“Top Rated”},
-{id:2,  name:“Teacher Hodan”,      rating:4.8,reviews:98, language:“Somali”, price:12,subject:“Quran”,          color:”#0e4d6e”,bio:“Patient and nurturing Quran teacher for children and adults. Focuses on correct pronunciation.”,students:180,lessons:1200,badge:“Popular”},
-{id:3,  name:“Teacher Maryam”,     rating:4.9,reviews:176,language:“Arabic”, price:20,subject:“Quran”,          color:”#164e63”,bio:“Hafidha with ijaza in Quran recitation. Teaches Quran with full Tajweed rules.”,students:310,lessons:2400,badge:“Top Rated”},
-{id:4,  name:“Teacher Idil”,       rating:4.7,reviews:64, language:“Somali”, price:10,subject:“Quran”,          color:”#1e4976”,bio:“Friendly beginner-focused Quran teacher. Great for kids starting their Quran journey.”,students:95, lessons:620, badge:“New”},
-{id:5,  name:“Teacher Faadumo”,    rating:4.8,reviews:112,language:“Somali”, price:14,subject:“Somali Language”,color:”#2d6a4f”,bio:“Native Somali speaker teaching reading, writing and conversation for diaspora children.”,students:200,lessons:1560,badge:“Top Rated”},
-{id:6,  name:“Teacher Caasha”,     rating:4.7,reviews:87, language:“Somali”, price:11,subject:“Somali Language”,color:”#1b4332”,bio:“Engaging Somali language teacher using storytelling and songs to make learning fun.”,students:145,lessons:980, badge:“Popular”},
-{id:7,  name:“Teacher Sahra”,      rating:4.6,reviews:53, language:“Somali”, price:10,subject:“Somali Language”,color:”#386641”,bio:“Specializes in teaching Somali to second-generation children living abroad.”,students:88, lessons:540, badge:null},
-{id:8,  name:“Teacher Deeqa”,      rating:4.9,reviews:201,language:“Somali”, price:18,subject:“Somali Language”,color:”#3a5a40”,bio:“Award-winning Somali language educator. Curriculum developer and published author.”,students:380,lessons:2900,badge:“Top Rated”},
-{id:9,  name:“Teacher Omar”,       rating:4.8,reviews:133,language:“Arabic”, price:18,subject:“Arabic”,         color:”#b45309”,bio:“Egyptian-trained Arabic teacher. MSA and Fusha Arabic for all levels.”,students:220,lessons:1700,badge:“Popular”},
-{id:10, name:“Teacher Yusuf”,      rating:4.7,reviews:79, language:“Somali”, price:15,subject:“Arabic”,         color:”#92400e”,bio:“Bilingual Arabic-Somali teacher making Arabic accessible to Somali learners.”,students:130,lessons:890, badge:null},
-{id:11, name:“Teacher Nimo”,       rating:4.9,reviews:158,language:“Arabic”, price:22,subject:“Arabic”,         color:”#78350f”,bio:“PhD in Arabic linguistics. Advanced grammar, literature and conversation.”,students:270,lessons:2100,badge:“Top Rated”},
-{id:12, name:“Teacher Abdirahman”, rating:4.6,reviews:44, language:“Somali”, price:12,subject:“Arabic”,         color:”#a16207”,bio:“Enthusiastic Arabic teacher for beginners. Fun visual methods for quick learning.”,students:70, lessons:380, badge:“New”},
-{id:13, name:“Teacher Amina”,      rating:4.8,reviews:167,language:“English”,price:16,subject:“English”,        color:”#6d28d9”,bio:“IELTS & TOEFL specialist. Helped 200+ students achieve their target band scores.”,students:290,lessons:2200,badge:“Popular”},
-{id:14, name:“Teacher Warsan”,     rating:4.7,reviews:91, language:“Somali”, price:13,subject:“English”,        color:”#5b21b6”,bio:“English teacher for Somali families. Covers school curriculum and homework help.”,students:160,lessons:1050,badge:null},
-{id:15, name:“Teacher Ifrah”,      rating:4.9,reviews:188,language:“English”,price:20,subject:“English”,        color:”#4c1d95”,bio:“Cambridge-certified English teacher. Business English and academic writing expert.”,students:330,lessons:2600,badge:“Top Rated”},
-{id:16, name:“Teacher Bile”,       rating:4.6,reviews:38, language:“Somali”, price:10,subject:“English”,        color:”#7c3aed”,bio:“Passionate about helping new arrivals build English confidence for daily life.”,students:60, lessons:310, badge:“New”},
-{id:17, name:“Teacher Ahmed”,      rating:4.8,reviews:144,language:“Somali”, price:17,subject:“Mathematics”,    color:”#be123c”,bio:“Maths teacher for GCSE, A-Level and university entrance. 95% pass rate.”,students:245,lessons:1950,badge:“Popular”},
-{id:18, name:“Teacher Liban”,      rating:4.7,reviews:76, language:“Somali”, price:14,subject:“Mathematics”,    color:”#9f1239”,bio:“Makes maths fun and easy to understand. Primary and secondary level specialist.”,students:125,lessons:830, badge:null},
-{id:19, name:“Teacher Sagal”,      rating:4.9,reviews:195,language:“English”,price:25,subject:“Mathematics”,    color:”#881337”,bio:“Oxford-educated mathematician. Specialist in advanced calculus and statistics.”,students:350,lessons:2750,badge:“Top Rated”},
-{id:20, name:“Teacher Khalid”,     rating:4.6,reviews:49, language:“Arabic”, price:12,subject:“Mathematics”,    color:”#b91c1c”,bio:“Fun and patient maths tutor for young learners aged 6–14.”,students:80, lessons:420, badge:“New”},
-];
-
-const SUBJECTS = [“All”,“Quran”,“Somali Language”,“Arabic”,“English”,“Mathematics”];
-const LANGS    = [“All Languages”,“Somali”,“Arabic”,“English”];
-const PRICES   = [“Any Price”,“Under $12”,”$12–$16”,”$17–$20”,“Over $20”];
-const SORTS    = [“Top Rated”,“Price: Low to High”,“Price: High to Low”,“Most Reviews”];
-const S_COLOR  = {Quran:”#1a4a7a”,“Somali Language”:”#2d6a4f”,Arabic:”#b45309”,English:”#6d28d9”,Mathematics:”#be123c”};
-const S_ICON   = {All:“📚”,Quran:“🕌”,“Somali Language”:“🇸🇴”,Arabic:“🌙”,English:“📖”,Mathematics:“📐”};
-const B_COLOR  = {“Top Rated”:{bg:”#eff6ff”,c:”#1d4ed8”},Popular:{bg:”#ecfdf5”,c:”#059669”},New:{bg:”#fffbeb”,c:”#d97706”}};
-
-// ── SHARED COMPONENTS ────────────────────────────────────
-const Av = ({name,color,size=44}) => html`
-
-  <div style=${{width:size,height:size,borderRadius:"50%",background:color,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:700,fontSize:size*0.38,flexShrink:0,fontFamily:"'Merriweather',serif"}}>
-    ${name[0]}
-  </div>`;
-
-const Stars = ({r,size=11}) => html` <span style=${{color:"#f5a623",fontSize:size}}> ${"★".repeat(Math.floor(r))}<span style=${{color:"#ddd"}}>${"★".repeat(5-Math.floor(r))}</span> </span>`;
-
-const Bdg = ({text}) => {
-if(!text) return null;
-const {bg,c} = B_COLOR[text]||{};
-return html`<span style=${{background:bg,color:c,fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:20}}>${text}</span>`;
-};
-
-const Logo = ({lg}) => html`
-
-  <div style=${{display:"flex",alignItems:"center",gap:8}}>
-    <div style=${{background:"linear-gradient(135deg,#1a4a7a,#2563eb)",borderRadius:lg?12:8,width:lg?44:34,height:lg?44:34,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:lg?24:18,boxShadow:"0 4px 14px rgba(37,99,235,0.3)"}}>📚</div>
-    <span style=${{fontFamily:"'Merriweather',serif",fontWeight:700,fontSize:lg?26:17,color:"#1a4a7a"}}>Somali<span style=${{color:"#2563eb"}}>Tutor</span></span>
-  </div>`;
-
-// ── LOGIN ────────────────────────────────────────────────
-function LoginPage({onLogin, onSignup}) {
-const [email,setEmail]=useState(””);
-const [pass,setPass]=useState(””);
-const [show,setShow]=useState(false);
-const [loading,setLoading]=useState(false);
-const [err,setErr]=useState(””);
-
-function submit() {
-if(!email||!pass){setErr(“Please fill in all fields.”);return;}
-if(!email.includes(”@”)){setErr(“Please enter a valid email.”);return;}
-setErr(””); setLoading(true);
-setTimeout(()=>{setLoading(false);onLogin({name:email.split(”@”)[0],email});},1100);
-}
-
-return html`
-
-  <div style=${{minHeight:"100vh",display:"flex"}}>
-    <div style=${{flex:1,background:"linear-gradient(160deg,#0f2744,#1a4a7a,#2563eb)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:48,position:"relative",overflow:"hidden"}}>
-      <div style=${{position:"absolute",bottom:-80,right:-80,width:280,height:280,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}></div>
-      <div style=${{position:"absolute",top:50,left:50,width:70,height:70,borderRadius:"50%",background:"rgba(255,255,255,0.05)"}}></div>
-      <div class="fade-up" style=${{textAlign:"center",zIndex:1,maxWidth:380}}>
-        <div style=${{marginBottom:28,display:"flex",justifyContent:"center"}}><${Logo} lg=${true}/></div>
-        <h1 style=${{fontFamily:"'Merriweather',serif",fontSize:30,color:"#fff",lineHeight:1.35,marginBottom:14}}>Learn Somali,<br/>Quran & More</h1>
-        <p style=${{color:"rgba(255,255,255,0.72)",fontSize:15,lineHeight:1.7,marginBottom:28}}>Connect with 20 expert tutors across 5 subjects.</p>
-        ${["🕌 Quran & Tajweed","🇸🇴 Somali Language","🌙 Arabic","📖 English","📐 Mathematics"].map(f=>html`
-          <div style=${{background:"rgba(255,255,255,0.1)",borderRadius:50,padding:"9px 20px",marginBottom:8,color:"#fff",fontSize:13.5,border:"1px solid rgba(255,255,255,0.15)"}}>${f}</div>`)}
-      </div>
-    </div>
-    <div style=${{width:460,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",padding:48}}>
-      <div class="slide-right" style=${{width:"100%",maxWidth:360}}>
-        <h2 style=${{fontFamily:"'Merriweather',serif",fontSize:24,color:"#1e293b",marginBottom:7}}>Welcome back</h2>
-        <p style=${{color:"#64748b",fontSize:14,marginBottom:26}}>Sign in to continue your learning journey</p>
-        ${err&&html`<div style=${{background:"#fef2f2",border:"1.5px solid #fecaca",borderRadius:10,padding:"11px 15px",marginBottom:16,color:"#dc2626",fontSize:13}}>⚠️ ${err}</div>`}
-        <label style=${{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>Email address</label>
-        <input value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="you@example.com" type="email"
-          style=${{width:"100%",padding:"11px 15px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:14,marginBottom:15,background:"#f8fafc"}}/>
-        <label style=${{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>Password</label>
-        <div style=${{position:"relative",marginBottom:8}}>
-          <input value=${pass} onInput=${e=>setPass(e.target.value)} onKeyDown=${e=>e.key==="Enter"&&submit()}
-            placeholder="Enter your password" type=${show?"text":"password"}
-            style=${{width:"100%",padding:"11px 15px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:14,background:"#f8fafc"}}/>
-          <button onClick=${()=>setShow(!show)} style=${{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#94a3b8"}}>${show?"🙈":"👁️"}</button>
-        </div>
-        <div style=${{textAlign:"right",marginBottom:20}}><button style=${{background:"none",border:"none",color:"#2563eb",fontSize:13,cursor:"pointer"}}>Forgot password?</button></div>
-        <button class="btn-primary" onClick=${submit} disabled=${loading}
-          style=${{width:"100%",padding:"13px",background:loading?"#93c5fd":"linear-gradient(135deg,#1a4a7a,#2563eb)",color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:loading?"not-allowed":"pointer",boxShadow:"0 4px 14px rgba(37,99,235,0.3)",marginBottom:18}}>
-          ${loading?"Signing in...":"Sign In →"}
-        </button>
-        <p style=${{textAlign:"center",fontSize:14,color:"#64748b"}}>
-          Don't have an account?${" "}
-          <button onClick=${onSignup} style=${{background:"none",border:"none",color:"#2563eb",fontWeight:700,cursor:"pointer",fontSize:14}}>Sign up free</button>
-        </p>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ── SIGNUP ───────────────────────────────────────────────
-function SignupPage({onSignup, onLogin}) {
-const [name,setName]=useState(””); const [email,setEmail]=useState(””);
-const [pass,setPass]=useState(””); const [role,setRole]=useState(“student”);
-const [show,setShow]=useState(false); const [loading,setLoading]=useState(false); const [err,setErr]=useState(””);
-
-function submit() {
-if(!name||!email||!pass){setErr(“Please fill in all fields.”);return;}
-if(!email.includes(”@”)){setErr(“Please enter a valid email.”);return;}
-if(pass.length<6){setErr(“Password must be at least 6 characters.”);return;}
-setErr(””); setLoading(true);
-setTimeout(()=>{setLoading(false);onSignup({name,email});},1100);
-}
-
-const strength = pass.length<4?“Too short”:pass.length<6?“Weak”:pass.length<8?“Good”:“Strong”;
-const strengthColor = pass.length>=8?”#22c55e”:”#94a3b8”;
-
-return html`
-
-  <div style=${{minHeight:"100vh",display:"flex"}}>
-    <div style=${{flex:1,background:"linear-gradient(160deg,#0f2744,#1a4a7a,#2563eb)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:48,position:"relative",overflow:"hidden"}}>
-      <div style=${{position:"absolute",bottom:-80,right:-80,width:280,height:280,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}></div>
-      <div class="fade-up" style=${{textAlign:"center",zIndex:1,maxWidth:360}}>
-        <div style=${{marginBottom:28,display:"flex",justifyContent:"center"}}><${Logo} lg=${true}/></div>
-        <h1 style=${{fontFamily:"'Merriweather',serif",fontSize:28,color:"#fff",lineHeight:1.35,marginBottom:14}}>Join thousands of<br/>Somali learners</h1>
-        <p style=${{color:"rgba(255,255,255,0.72)",fontSize:15,lineHeight:1.7,marginBottom:28}}>20 expert tutors. 5 subjects. Start free today.</p>
-        <div style=${{display:"flex",gap:12,justifyContent:"center"}}>
-          ${[["20+","Tutors"],["10K+","Students"],["4.8★","Rating"]].map(([n,l])=>html`
-            <div style=${{background:"rgba(255,255,255,0.1)",borderRadius:12,padding:"13px 16px",textAlign:"center",border:"1px solid rgba(255,255,255,0.15)"}}>
-              <div style=${{fontFamily:"'Merriweather',serif",fontSize:20,fontWeight:700,color:"#fff"}}>${n}</div>
-              <div style=${{fontSize:11,color:"rgba(255,255,255,0.7)",marginTop:2}}>${l}</div>
-            </div>`)}
-        </div>
-      </div>
-    </div>
-    <div style=${{width:480,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",padding:48,overflowY:"auto"}}>
-      <div class="slide-right" style=${{width:"100%",maxWidth:390}}>
-        <h2 style=${{fontFamily:"'Merriweather',serif",fontSize:24,color:"#1e293b",marginBottom:7}}>Create your account</h2>
-        <p style=${{color:"#64748b",fontSize:14,marginBottom:20}}>Start with a free trial — no credit card needed</p>
-        <div style=${{display:"flex",gap:10,marginBottom:18}}>
-          ${[{k:"student",i:"🎓",l:"I'm a Student"},{k:"tutor",i:"👨‍🏫",l:"I'm a Tutor"}].map(r=>html`
-            <button onClick=${()=>setRole(r.k)}
-              style=${{flex:1,padding:"11px",border:role===r.k?"2px solid #2563eb":"1.5px solid #e2e8f0",borderRadius:12,background:role===r.k?"#eff6ff":"#fff",cursor:"pointer",fontSize:13.5,fontWeight:600,color:role===r.k?"#1d4ed8":"#64748b",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-              ${r.i} ${r.l}
-            </button>`)}
-        </div>
-        ${err&&html`<div style=${{background:"#fef2f2",border:"1.5px solid #fecaca",borderRadius:10,padding:"11px 15px",marginBottom:14,color:"#dc2626",fontSize:13}}>⚠️ ${err}</div>`}
-        <label style=${{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>Full name</label>
-        <input value=${name} onInput=${e=>setName(e.target.value)} placeholder="Ayaan Hassan"
-          style=${{width:"100%",padding:"11px 15px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:14,marginBottom:13,background:"#f8fafc"}}/>
-        <label style=${{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>Email address</label>
-        <input value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="you@example.com" type="email"
-          style=${{width:"100%",padding:"11px 15px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:14,marginBottom:13,background:"#f8fafc"}}/>
-        <label style=${{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>Password</label>
-        <div style=${{position:"relative",marginBottom:pass.length>0?6:18}}>
-          <input value=${pass} onInput=${e=>setPass(e.target.value)} onKeyDown=${e=>e.key==="Enter"&&submit()}
-            placeholder="At least 6 characters" type=${show?"text":"password"}
-            style=${{width:"100%",padding:"11px 15px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:14,background:"#f8fafc"}}/>
-          <button onClick=${()=>setShow(!show)} style=${{position:"absolute",right:13,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#94a3b8"}}>${show?"🙈":"👁️"}</button>
-        </div>
-        ${pass.length>0&&html`
-          <div style=${{marginBottom:16}}>
-            <div style=${{display:"flex",gap:3,marginBottom:3}}>${[1,2,3,4].map(i=>html`<div style=${{flex:1,height:3,borderRadius:2,background:pass.length>=i*2?"#22c55e":"#e2e8f0"}}></div>`)}</div>
-            <span style=${{fontSize:11,color:strengthColor}}>${strength} password</span>
-          </div>`}
-        <button class="btn-primary" onClick=${submit} disabled=${loading}
-          style=${{width:"100%",padding:"13px",background:loading?"#93c5fd":"linear-gradient(135deg,#1a4a7a,#2563eb)",color:"#fff",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:loading?"not-allowed":"pointer",boxShadow:"0 4px 14px rgba(37,99,235,0.3)",marginBottom:14}}>
-          ${loading?"Creating account...":"Create Free Account →"}
-        </button>
-        <p style=${{textAlign:"center",fontSize:14,color:"#64748b"}}>
-          Already have an account?${" "}
-          <button onClick=${onLogin} style=${{background:"none",border:"none",color:"#2563eb",fontWeight:700,cursor:"pointer",fontSize:14}}>Sign in</button>
-        </p>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ── DASHBOARD ────────────────────────────────────────────
-function Dashboard({user, onLogout}) {
-const [nav,setNav]=useState(“Find Tutors”);
-const [sel,setSel]=useState(TUTORS[0]);
-const [pay,setPay]=useState(“card”);
-const [slot,setSlot]=useState(“4:30 PM - 5:00 PM”);
-const [booked,setBooked]=useState(false);
-const [q,setQ]=useState(””);
-const [subj,setSubj]=useState(“All”);
-const [lang,setLang]=useState(“All Languages”);
-const [price,setPrice]=useState(“Any Price”);
-const [sort,setSort]=useState(“Top Rated”);
-
-const first = user.name.charAt(0).toUpperCase()+user.name.slice(1);
-
-const list = useMemo(()=>{
-let r = TUTORS.filter(t=>{
-const sq = !q || t.name.toLowerCase().includes(q.toLowerCase())||t.subject.toLowerCase().includes(q.toLowerCase())||t.bio.toLowerCase().includes(q.toLowerCase());
-const ss = subj===“All”||t.subject===subj;
-const sl = lang===“All Languages”||t.language===lang;
-const sp = price===“Any Price”||(price===“Under $12”&&t.price<12)||(price===”$12–$16”&&t.price>=12&&t.price<=16)||(price===”$17–$20”&&t.price>=17&&t.price<=20)||(price===“Over $20”&&t.price>20);
-return sq&&ss&&sl&&sp;
-});
-if(sort===“Top Rated”) r.sort((a,b)=>b.rating-a.rating);
-else if(sort===“Price: Low to High”) r.sort((a,b)=>a.price-b.price);
-else if(sort===“Price: High to Low”) r.sort((a,b)=>b.price-a.price);
-else r.sort((a,b)=>b.reviews-a.reviews);
-return r;
-},[q,subj,lang,price,sort]);
-
-const NAV=[{l:“Dashboard”,i:“🏠”},{l:“Find Tutors”,i:“🔍”},{l:“My Lessons”,i:“📅”},{l:“Messages”,i:“💬”},{l:“Payments”,i:“💳”},{l:“Settings”,i:“⚙️”}];
-
-return html`
-
-  <div style=${{fontFamily:"'DM Sans',sans-serif",height:"100vh",display:"flex",flexDirection:"column",background:"#f0f4f8"}}>
-    <!-- Topbar -->
-    <div style=${{background:"#fff",borderBottom:"1px solid #e8ecf0",display:"flex",alignItems:"center",padding:"0 22px",height:58,gap:14,flexShrink:0}}>
-      <div style=${{minWidth:190}}><${Logo}/></div>
-      <div style=${{flex:1,maxWidth:400,position:"relative"}}>
-        <span style=${{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",color:"#94a3b8",fontSize:14}}>🔍</span>
-        <input value=${q} onInput=${e=>setQ(e.target.value)} placeholder="Search tutors, subjects..."
-          style=${{width:"100%",padding:"8px 14px 8px 32px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:13.5,background:"#f8fafc",boxSizing:"border-box"}}/>
-      </div>
-      <div style=${{flex:1}}></div>
-      ${["✉️","🔔"].map(ic=>html`<button style=${{background:"none",border:"none",cursor:"pointer",fontSize:17,padding:"5px 7px"}}>${ic}</button>`)}
-      <${Av} name=${first} color="#7c3aed" size=${33}/>
-      <span style=${{fontSize:13,fontWeight:500,color:"#374151"}}>${first}</span>
-    </div>
-
-```
-<div style=${{display:"flex",flex:1,overflow:"hidden"}}>
-  <!-- Sidebar -->
-  <aside style=${{width:210,background:"#fff",borderRight:"1px solid #e8ecf0",display:"flex",flexDirection:"column",padding:"18px 0",flexShrink:0}}>
-    <nav style=${{flex:1}}>
-      ${NAV.map(item=>{
-        const active=nav===item.l;
-        return html`<button class="nav-item" onClick=${()=>setNav(item.l)}
-          style=${{display:"flex",alignItems:"center",gap:11,width:"100%",padding:"10px 18px",background:active?"#eff6ff":"none",border:"none",borderLeft:active?"3px solid #2563eb":"3px solid transparent",cursor:"pointer",color:active?"#1d4ed8":"#64748b",fontWeight:active?600:400,fontSize:14,textAlign:"left"}}>
-          <span style=${{fontSize:15}}>${item.i}</span>${item.l}
-        </button>`;
-      })}
-    </nav>
-    <div style=${{padding:"0 14px 10px"}}>
-      <button onClick=${onLogout} style=${{width:"100%",padding:"9px",background:"none",border:"1.5px solid #e2e8f0",borderRadius:10,cursor:"pointer",color:"#64748b",fontSize:13.5}}>🚪 Log Out</button>
-    </div>
-    <div style=${{margin:"0 13px 14px",background:"#f8fafc",borderRadius:12,padding:"13px 11px",border:"1px solid #e2e8f0"}}>
-      <div style=${{fontWeight:700,fontSize:12.5,color:"#1e293b",marginBottom:9}}>Upcoming Lesson</div>
-      ${TUTORS.slice(0,2).map(t=>html`
-        <div style=${{display:"flex",alignItems:"center",gap:7,marginBottom:7}}>
-          <${Av} name=${t.name} color=${t.color} size=${30}/>
-          <div><div style=${{fontWeight:600,fontSize:11.5,color:"#1e293b"}}>${t.name}</div><div style=${{fontSize:10,color:"#64748b"}}>\$${t.price}/hr · ${t.subject}</div></div>
-        </div>`)}
-      <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:3}}>
-        <span style=${{fontSize:10.5,color:"#64748b"}}>Today 4:30 PM</span>
-        <button style=${{background:"#22c55e",color:"#fff",border:"none",borderRadius:7,padding:"4px 9px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Join Now</button>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Center: tutor list -->
-  <div style=${{flex:1,padding:"18px",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
-    <div>
-      <h1 style=${{fontFamily:"'Merriweather',serif",fontSize:20,color:"#1e293b",fontWeight:700}}>Welcome back, ${first}! 👋</h1>
-      <p style=${{color:"#64748b",fontSize:13,marginTop:3}}>Browse ${TUTORS.length} expert tutors across 5 subjects</p>
-    </div>
-
-    <!-- Subject pills -->
-    <div style=${{display:"flex",gap:7,flexWrap:"wrap"}}>
-      ${SUBJECTS.map(s=>html`
-        <button class="pill" onClick=${()=>setSubj(s)}
-          style=${{padding:"6px 13px",background:subj===s?(S_COLOR[s]||"#2563eb"):"#fff",color:subj===s?"#fff":"#64748b",border:subj===s?"none":"1.5px solid #e2e8f0",borderRadius:50,fontSize:12.5,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
-          ${S_ICON[s]} ${s}
-        </button>`)}
-    </div>
-
-    <!-- Filters -->
-    <div style=${{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-      ${[[lang,setLang,LANGS],[price,setPrice,PRICES],[sort,setSort,SORTS]].map(([v,fn,opts])=>html`
-        <select value=${v} onChange=${e=>fn(e.target.value)}
-          style=${{padding:"6px 11px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:12.5,color:"#374151",background:"#fff",cursor:"pointer"}}>
-          ${opts.map(o=>html`<option>${o}</option>`)}
-        </select>`)}
-      <span style=${{fontSize:12,color:"#94a3b8",marginLeft:"auto",fontWeight:500}}>${list.length} tutor${list.length!==1?"s":""} found</span>
-    </div>
-
-    <!-- Tutor grid -->
-    ${list.length===0
-      ? html`<div style=${{background:"#fff",borderRadius:14,padding:36,textAlign:"center",border:"1.5px solid #e2e8f0"}}>
-          <div style=${{fontSize:36,marginBottom:8}}>🔍</div>
-          <div style=${{fontWeight:600,fontSize:14,color:"#475569"}}>No tutors found</div>
-          <div style=${{fontSize:12.5,color:"#94a3b8",marginTop:3}}>Try adjusting your filters</div>
-        </div>`
-      : html`<div style=${{display:"grid",gridTemplateColumns:"1fr 1fr",gap:11}}>
-          ${list.map(t=>html`
-            <div class="card" onClick=${()=>{setSel(t);setBooked(false);}}
-              style=${{background:"#fff",borderRadius:13,padding:14,cursor:"pointer",border:sel?.id===t.id?"2px solid #2563eb":"2px solid transparent",boxShadow:"0 1px 5px rgba(0,0,0,0.06)"}}>
-              <div style=${{display:"flex",gap:10,alignItems:"flex-start",marginBottom:9}}>
-                <${Av} name=${t.name} color=${t.color} size=${42}/>
-                <div style=${{flex:1,minWidth:0}}>
-                  <div style=${{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:2}}>
-                    <span style=${{fontWeight:700,fontSize:13,color:"#1e293b"}}>${t.name}</span>
-                    <${Bdg} text=${t.badge}/>
-                  </div>
-                  <div style=${{fontSize:10.5,color:"#64748b",marginBottom:3}}><${Stars} r=${t.rating}/> ${t.rating} (${t.reviews})</div>
-                  <span style=${{background:S_COLOR[t.subject]+"22",color:S_COLOR[t.subject],padding:"2px 7px",borderRadius:20,fontSize:10,fontWeight:700}}>${t.subject}</span>
-                  <span style=${{color:"#94a3b8",fontSize:10,marginLeft:5}}>· ${t.language}</span>
-                </div>
-              </div>
-              <p style=${{fontSize:11.5,color:"#64748b",lineHeight:1.55,marginBottom:9,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>${t.bio}</p>
-              <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style=${{display:"flex",gap:9}}>
-                  <span style=${{fontSize:10,color:"#94a3b8"}}>👥 ${t.students}</span>
-                  <span style=${{fontSize:10,color:"#94a3b8"}}>📚 ${t.lessons}</span>
-                </div>
-                <span style=${{fontWeight:700,fontSize:13.5,color:"#1a4a7a"}}>\$${t.price}<span style=${{fontSize:10,color:"#94a3b8",fontWeight:400}}>/hr</span></span>
-              </div>
-            </div>`)}
-        </div>`}
+{/* Center - Tutor list */}
+<div style={{flex:1,padding:"20px",overflowY:"auto",display:"flex",flexDirection:"column",gap:16}}>
+  <div>
+    <h1 style={{fontFamily:"'Merriweather',serif",fontSize:21,color:"#1e293b",fontWeight:700}}>Welcome back, {firstName}! 👋</h1>
+    <p style={{color:"#64748b",fontSize:13,marginTop:3}}>Browse {ALL_TUTORS.length} expert tutors across 5 subjects</p>
   </div>
 
-  <!-- Right panel -->
-  <div style=${{width:285,padding:"18px 18px 18px 0",overflowY:"auto",display:"flex",flexDirection:"column",gap:14,flexShrink:0}}>
-    ${sel&&html`
-    <div style=${{background:"#fff",borderRadius:15,padding:17,border:"1.5px solid #e2e8f0",boxShadow:"0 2px 10px rgba(0,0,0,0.05)"}}>
-      <div style=${{display:"flex",gap:10,alignItems:"center",marginBottom:10}}>
-        <${Av} name=${sel.name} color=${sel.color} size=${46}/>
+  {/* Subject tabs */}
+  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+    {SUBJECTS.map(s=>(
+      <button key={s} onClick={()=>setSubject(s)}
+        style={{padding:"7px 14px",background:subject===s?(SUBJ_COLORS[s]||"#2563eb"):"#fff",color:subject===s?"#fff":"#64748b",border:subject===s?"none":"1.5px solid #e2e8f0",borderRadius:50,fontSize:12.5,fontWeight:600,cursor:"pointer",transition:"all 0.15s",display:"flex",alignItems:"center",gap:5}}>
+        {SUBJ_ICONS[s]} {s}
+      </button>
+    ))}
+  </div>
+
+  {/* Filters */}
+  <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+    {[[lang,setLang,LANGUAGES],[price,setPrice,PRICES],[sort,setSort,SORTS]].map(([val,setter,opts],i)=>(
+      <select key={i} value={val} onChange={e=>setter(e.target.value)}
+        style={{padding:"7px 12px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:12.5,color:"#374151",background:"#fff",outline:"none",cursor:"pointer"}}>
+        {opts.map(o=><option key={o}>{o}</option>)}
+      </select>
+    ))}
+    <span style={{fontSize:12.5,color:"#94a3b8",marginLeft:"auto",fontWeight:500}}>{filtered.length} tutor{filtered.length!==1?"s":""} found</span>
+  </div>
+
+  {/* Grid */}
+  {filtered.length===0?(
+    <div style={{background:"#fff",borderRadius:14,padding:40,textAlign:"center",border:"1.5px solid #e2e8f0"}}>
+      <div style={{fontSize:40,marginBottom:10}}>🔍</div>
+      <div style={{fontWeight:600,fontSize:15,color:"#475569"}}>No tutors found</div>
+      <div style={{fontSize:13,color:"#94a3b8",marginTop:4}}>Try adjusting your filters</div>
+    </div>
+  ):(
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+      {filtered.map(t=>(
+        <div key={t.id} className="tutor-card" onClick={()=>{setSelected(t);setBooked(false);}}
+          style={{background:"#fff",borderRadius:14,padding:16,cursor:"pointer",border:selected?.id===t.id?"2px solid #2563eb":"2px solid transparent",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
+          <div style={{display:"flex",gap:11,alignItems:"flex-start",marginBottom:10}}>
+            <Avatar name={t.name} color={t.color} size={44}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:2}}>
+                <span style={{fontWeight:700,fontSize:13.5,color:"#1e293b"}}>{t.name}</span>
+                <Badge text={t.badge}/>
+              </div>
+              <div style={{fontSize:11,color:"#64748b",marginBottom:3}}><Stars rating={t.rating} size={10}/> {t.rating} ({t.reviews})</div>
+              <span style={{background:SUBJ_COLORS[t.subject]+"22",color:SUBJ_COLORS[t.subject],padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700}}>{t.subject}</span>
+              <span style={{color:"#94a3b8",fontSize:10,marginLeft:6}}>· {t.language}</span>
+            </div>
+          </div>
+          <p style={{fontSize:11.5,color:"#64748b",lineHeight:1.55,marginBottom:10,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{t.bio}</p>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",gap:10}}>
+              <span style={{fontSize:10.5,color:"#94a3b8"}}>👥 {t.students}</span>
+              <span style={{fontSize:10.5,color:"#94a3b8"}}>📚 {t.lessons}</span>
+            </div>
+            <span style={{fontWeight:700,fontSize:14,color:"#1a4a7a"}}>${t.price}<span style={{fontSize:10,color:"#94a3b8",fontWeight:400}}>/hr</span></span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+{/* Right panel */}
+<div style={{width:295,padding:"20px 20px 20px 0",overflowY:"auto",display:"flex",flexDirection:"column",gap:16,flexShrink:0}}>
+  {selected&&(
+    <div style={{background:"#fff",borderRadius:16,padding:18,border:"1.5px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.05)"}}>
+      <div style={{display:"flex",gap:11,alignItems:"center",marginBottom:11}}>
+        <Avatar name={selected.name} color={selected.color} size={48}/>
         <div>
-          <div style=${{fontWeight:700,fontSize:14,color:"#1e293b"}}>${sel.name}</div>
-          <div style=${{fontSize:11}}><${Stars} r=${sel.rating}/> <span style=${{color:"#64748b"}}>${sel.rating} (${sel.reviews})</span></div>
-          <${Bdg} text=${sel.badge}/>
+          <div style={{fontWeight:700,fontSize:14.5,color:"#1e293b"}}>{selected.name}</div>
+          <div style={{fontSize:11.5}}><Stars rating={selected.rating}/> <span style={{color:"#64748b"}}>{selected.rating} ({selected.reviews})</span></div>
+          <Badge text={selected.badge}/>
         </div>
       </div>
-      <p style=${{fontSize:11.5,color:"#64748b",lineHeight:1.6,marginBottom:10}}>${sel.bio}</p>
-      <div style=${{display:"flex",gap:7,marginBottom:13}}>
-        ${[["👥",sel.students+" students"],["📚",sel.lessons+" lessons"]].map(([ic,v])=>html`
-          <div style=${{flex:1,background:"#f8fafc",borderRadius:8,padding:"7px",textAlign:"center"}}>
-            <div style=${{fontSize:14}}>${ic}</div><div style=${{fontSize:9.5,color:"#64748b",fontWeight:500,marginTop:1}}>${v}</div>
-          </div>`)}
+      <p style={{fontSize:11.5,color:"#64748b",lineHeight:1.6,marginBottom:11}}>{selected.bio}</p>
+      <div style={{display:"flex",gap:8,marginBottom:14}}>
+        {[["👥",selected.students+" students"],["📚",selected.lessons+" lessons"]].map(([ic,v],i)=>(
+          <div key={i} style={{flex:1,background:"#f8fafc",borderRadius:8,padding:"8px",textAlign:"center"}}>
+            <div style={{fontSize:14}}>{ic}</div><div style={{fontSize:10,color:"#64748b",fontWeight:500,marginTop:1}}>{v}</div>
+          </div>
+        ))}
       </div>
-      <div style=${{fontWeight:700,fontSize:12.5,color:"#1e293b",marginBottom:6}}>Choose a time</div>
-      <select value=${slot} onChange=${e=>{setSlot(e.target.value);setBooked(false);}}
-        style=${{width:"100%",padding:"8px 11px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:12.5,marginBottom:11,background:"#f8fafc"}}>
+      <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:7}}>Choose a time</div>
+      <select value={slot} onChange={e=>{setSlot(e.target.value);setBooked(false);}}
+        style={{width:"100%",padding:"9px 12px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:13,marginBottom:12,background:"#f8fafc",outline:"none"}}>
         <option>4:30 PM - 5:00 PM</option><option>5:00 PM - 5:30 PM</option><option>6:00 PM - 6:30 PM</option><option>7:00 PM - 7:30 PM</option>
       </select>
-      <div style=${{fontWeight:700,fontSize:12.5,color:"#1e293b",marginBottom:6}}>Payment</div>
-      ${[{k:"card",i:"💳",l:"Credit / Debit Card"},{k:"paypal",i:"🅿️",l:"PayPal"},{k:"mobile",i:"📱",l:"Mobile Money"}].map(pm=>html`
-        <button onClick=${()=>setPay(pm.k)}
-          style=${{display:"flex",alignItems:"center",width:"100%",padding:"8px 10px",border:pay===pm.k?"2px solid #2563eb":"1.5px solid #e2e8f0",borderRadius:10,background:pay===pm.k?"#eff6ff":"#fff",cursor:"pointer",marginBottom:6,gap:8}}>
-          <span style=${{fontSize:15}}>${pm.i}</span><span style=${{flex:1,fontSize:12.5,fontWeight:500,color:"#1e293b",textAlign:"left"}}>${pm.l}</span>
-        </button>`)}
-      <button class="btn-primary" onClick=${()=>setBooked(true)}
-        style=${{width:"100%",padding:"12px",marginTop:5,background:booked?"#22c55e":"linear-gradient(135deg,#1a4a7a,#2563eb)",color:"#fff",border:"none",borderRadius:12,fontSize:13.5,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 12px rgba(37,99,235,0.25)",marginBottom:7}}>
-        ${booked?"✓ Booked!":"Confirm & Pay \$"+sel.price}
+      <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:7}}>Payment</div>
+      {[{key:"card",icon:"💳",label:"Credit / Debit Card"},{key:"paypal",icon:"🅿️",label:"PayPal"},{key:"mobile",icon:"📱",label:"Mobile Money"}].map(pm=>(
+        <button key={pm.key} onClick={()=>setPayment(pm.key)}
+          style={{display:"flex",alignItems:"center",width:"100%",padding:"9px 11px",border:payment===pm.key?"2px solid #2563eb":"1.5px solid #e2e8f0",borderRadius:10,background:payment===pm.key?"#eff6ff":"#fff",cursor:"pointer",marginBottom:6,gap:9}}>
+          <span style={{fontSize:16}}>{pm.icon}</span><span style={{flex:1,fontSize:13,fontWeight:500,color:"#1e293b",textAlign:"left"}}>{pm.label}</span>
+        </button>
+      ))}
+      <button onClick={()=>setBooked(true)}
+        style={{width:"100%",padding:"12px",marginTop:6,background:booked?"#22c55e":"linear-gradient(135deg,#1a4a7a,#2563eb)",color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 14px rgba(37,99,235,0.25)",marginBottom:8}}>
+        {booked?"✓ Booked!":`Confirm & Pay $${selected.price}`}
       </button>
-      ${!booked&&html`<button style=${{width:"100%",padding:"9px",background:"none",border:"1.5px solid #22c55e",borderRadius:12,fontSize:12.5,fontWeight:700,cursor:"pointer",color:"#16a34a"}}>🎁 Free Trial Lesson</button>`}
-    </div>`}
-
-    <!-- Live lesson -->
-    <div style=${{background:"#0f172a",borderRadius:15,padding:15}}>
-      <h2 style=${{fontSize:13.5,fontWeight:700,color:"#f1f5f9",margin:"0 0 11px"}}>Live Lesson</h2>
-      <div style=${{background:"linear-gradient(135deg,#1e3a5f,#0f2744)",borderRadius:11,height:125,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 14px",position:"relative"}}>
-        <div style=${{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-          <${Av} name="Khadra" color="#2563eb" size=${44}/>
-          <span style=${{color:"#93c5fd",fontSize:10}}>Teacher</span>
-        </div>
-        <div style=${{background:"rgba(255,255,255,0.95)",borderRadius:10,padding:"9px 13px",display:"flex",gap:9}}>
-          <span style=${{fontSize:21,fontWeight:700}}>بَ</span><span style=${{fontSize:21,fontWeight:700}}>ثَ</span>
-        </div>
-        <div style=${{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-          <${Av} name=${first} color="#7c3aed" size=${34}/>
-          <span style=${{color:"#c4b5fd",fontSize:10}}>${first}</span>
-        </div>
-        <div style=${{position:"absolute",top:7,left:7,background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,display:"flex",alignItems:"center",gap:3}}>
-          <div style=${{width:5,height:5,borderRadius:"50%",background:"#fff",animation:"pulse 1s infinite"}}></div>LIVE
-        </div>
+      {!booked&&<button style={{width:"100%",padding:"9px",background:"none",border:"1.5px solid #22c55e",borderRadius:12,fontSize:13,fontWeight:700,cursor:"pointer",color:"#16a34a"}}>🎁 Free Trial Lesson</button>}
+    </div>
+  )}
+  {/* Live */}
+  <div style={{background:"#0f172a",borderRadius:16,padding:16}}>
+    <h2 style={{fontSize:14,fontWeight:700,color:"#f1f5f9",margin:"0 0 12px"}}>Live Lesson</h2>
+    <div style={{background:"linear-gradient(135deg,#1e3a5f,#0f2744)",borderRadius:12,height:130,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 14px",position:"relative"}}>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
+        <Avatar name="Khadra" color="#2563eb" size={46}/>
+        <span style={{color:"#93c5fd",fontSize:10}}>Teacher</span>
       </div>
-      <div style=${{display:"flex",alignItems:"center",justifyContent:"center",gap:7,marginTop:10}}>
-        ${["🎙️","📹","💬"].map(ic=>html`<button style=${{background:"#1e293b",border:"none",color:"#94a3b8",fontSize:13,borderRadius:8,width:31,height:31,cursor:"pointer"}}>${ic}</button>`)}
-        <button style=${{background:"#ef4444",border:"none",color:"#fff",fontSize:11.5,fontWeight:700,borderRadius:8,padding:"7px 12px",cursor:"pointer"}}>End</button>
+      <div style={{background:"rgba(255,255,255,0.95)",borderRadius:10,padding:"10px 14px",display:"flex",gap:10}}>
+        <span style={{fontSize:22,fontWeight:700}}>بَ</span><span style={{fontSize:22,fontWeight:700}}>ثَ</span>
       </div>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
+        <Avatar name={firstName} color="#7c3aed" size={36}/>
+        <span style={{color:"#c4b5fd",fontSize:10}}>{firstName}</span>
+      </div>
+      <div style={{position:"absolute",top:8,left:8,background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,display:"flex",alignItems:"center",gap:3}}>
+        <div style={{width:5,height:5,borderRadius:"50%",background:"#fff",animation:"pulse 1s infinite"}}/>LIVE
+      </div>
+    </div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:11}}>
+      {["🎙️","📹","💬"].map((ic,i)=><button key={i} style={{background:"#1e293b",border:"none",color:"#94a3b8",fontSize:14,borderRadius:8,width:32,height:32,cursor:"pointer"}}>{ic}</button>)}
+      <button style={{background:"#ef4444",border:"none",color:"#fff",fontSize:12,fontWeight:700,borderRadius:8,padding:"7px 13px",cursor:"pointer"}}>End</button>
     </div>
   </div>
 </div>
-```
-
-  </div>`;
-}
-
-// ── ROOT ─────────────────────────────────────────────────
-function App() {
-const [page,setPage]=useState(“login”);
-const [user,setUser]=useState(null);
-if(page===“login”) return html`<${LoginPage} onLogin=${u=>{setUser(u);setPage("dashboard");}} onSignup=${()=>setPage("signup")}/>`;
-if(page===“signup”) return html`<${SignupPage} onSignup=${u=>{setUser(u);setPage("dashboard");}} onLogin=${()=>setPage("login")}/>`;
-return html`<${Dashboard} user=${user} onLogout=${()=>{setUser(null);setPage("login");}}/>`;
-}
-
-render(html`<${App}/>`, document.getElementById(‘app’));
-</script>
-
-</body>
-</html>

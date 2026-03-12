@@ -1,130 +1,885 @@
-{/* Center - Tutor list */}
-<div style={{flex:1,padding:"20px",overflowY:"auto",display:"flex",flexDirection:"column",gap:16}}>
-  <div>
-    <h1 style={{fontFamily:"'Merriweather',serif",fontSize:21,color:"#1e293b",fontWeight:700}}>Welcome back, {firstName}! 👋</h1>
-    <p style={{color:"#64748b",fontSize:13,marginTop:3}}>Browse {ALL_TUTORS.length} expert tutors across 5 subjects</p>
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SomaliTutor · Clean Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html, body, #app {
+  height: 100%;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+  line-height: 1.5;
+}
+/* subtle animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp 0.3s ease;
+}
+/* scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 20px;
+}
+/* utility for cards */
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e9eef2;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+  transition: all 0.15s ease;
+}
+.card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 12px 24px -8px rgba(0,34,64,0.08);
+  transform: translateY(-1px);
+}
+/* input focus */
+input:focus, select:focus, button:focus {
+  outline: none;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+}
+/* pill style */
+.pill {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 40px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.pill.active {
+  background: #1e3a8a;
+  border-color: #1e3a8a;
+  color: white;
+}
+.pill:hover:not(.active) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+/* badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.badge-top {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.badge-popular {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge-new {
+  background: #fef9c3;
+  color: #854d0e;
+}
+/* button primary */
+.btn-primary {
+  background: linear-gradient(145deg, #0f2b5c, #1e3a8a);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 6px 14px rgba(30,58,138,0.25);
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  background: #1e3a8a;
+  box-shadow: 0 10px 20px -5px rgba(30,58,138,0.4);
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(30,58,138,0.3);
+}
+.btn-secondary {
+  background: white;
+  border: 1px solid #d1d9e6;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+/* layout helpers */
+.flex {
+  display: flex;
+  align-items: center;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import { h, render } from 'https://esm.sh/preact@10.19.2';
+import { useState, useMemo } from 'https://esm.sh/preact@10.19.2/hooks';
+import { html } from 'https://esm.sh/htm@3.1.1/preact';
 
-  {/* Subject tabs */}
-  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-    {SUBJECTS.map(s=>(
-      <button key={s} onClick={()=>setSubject(s)}
-        style={{padding:"7px 14px",background:subject===s?(SUBJ_COLORS[s]||"#2563eb"):"#fff",color:subject===s?"#fff":"#64748b",border:subject===s?"none":"1.5px solid #e2e8f0",borderRadius:50,fontSize:12.5,fontWeight:600,cursor:"pointer",transition:"all 0.15s",display:"flex",alignItems:"center",gap:5}}>
-        {SUBJ_ICONS[s]} {s}
-      </button>
-    ))}
-  </div>
+// ---------- DATA ----------
+const TUTORS = [
+{id:1,  name:"Teacher Khadra",     rating:4.9,reviews:142,language:"Somali", price:15,subject:"Quran",          color:"#1a4a7a", bio:"Certified Quran teacher with 8 years experience. Specializes in Tajweed and Hifz for all ages.", students:230,lessons:1840,badge:"Top Rated"},
+{id:2,  name:"Teacher Hodan",      rating:4.8,reviews:98, language:"Somali", price:12,subject:"Quran",          color:"#0e4d6e", bio:"Patient and nurturing Quran teacher for children and adults. Focuses on correct pronunciation.", students:180,lessons:1200,badge:"Popular"},
+{id:3,  name:"Teacher Maryam",     rating:4.9,reviews:176,language:"Arabic", price:20,subject:"Quran",          color:"#164e63", bio:"Hafidha with ijaza in Quran recitation. Teaches Quran with full Tajweed rules.", students:310,lessons:2400,badge:"Top Rated"},
+{id:4,  name:"Teacher Idil",       rating:4.7,reviews:64, language:"Somali", price:10,subject:"Quran",          color:"#1e4976", bio:"Friendly beginner-focused Quran teacher. Great for kids starting their Quran journey.", students:95, lessons:620, badge:"New"},
+{id:5,  name:"Teacher Faadumo",    rating:4.8,reviews:112,language:"Somali", price:14,subject:"Somali Language",color:"#2d6a4f", bio:"Native Somali speaker teaching reading, writing and conversation for diaspora children.", students:200,lessons:1560,badge:"Top Rated"},
+{id:6,  name:"Teacher Caasha",     rating:4.7,reviews:87, language:"Somali", price:11,subject:"Somali Language",color:"#1b4332", bio:"Engaging Somali language teacher using storytelling and songs to make learning fun.", students:145,lessons:980, badge:"Popular"},
+{id:7,  name:"Teacher Sahra",      rating:4.6,reviews:53, language:"Somali", price:10,subject:"Somali Language",color:"#386641", bio:"Specializes in teaching Somali to second-generation children living abroad.", students:88, lessons:540, badge:null},
+{id:8,  name:"Teacher Deeqa",      rating:4.9,reviews:201,language:"Somali", price:18,subject:"Somali Language",color:"#3a5a40", bio:"Award-winning Somali language educator. Curriculum developer and published author.", students:380,lessons:2900,badge:"Top Rated"},
+{id:9,  name:"Teacher Omar",       rating:4.8,reviews:133,language:"Arabic", price:18,subject:"Arabic",         color:"#b45309", bio:"Egyptian-trained Arabic teacher. MSA and Fusha Arabic for all levels.", students:220,lessons:1700,badge:"Popular"},
+{id:10, name:"Teacher Yusuf",      rating:4.7,reviews:79, language:"Somali", price:15,subject:"Arabic",         color:"#92400e", bio:"Bilingual Arabic-Somali teacher making Arabic accessible to Somali learners.", students:130,lessons:890, badge:null},
+{id:11, name:"Teacher Nimo",       rating:4.9,reviews:158,language:"Arabic", price:22,subject:"Arabic",         color:"#78350f", bio:"PhD in Arabic linguistics. Advanced grammar, literature and conversation.", students:270,lessons:2100,badge:"Top Rated"},
+{id:12, name:"Teacher Abdirahman", rating:4.6,reviews:44, language:"Somali", price:12,subject:"Arabic",         color:"#a16207", bio:"Enthusiastic Arabic teacher for beginners. Fun visual methods for quick learning.", students:70, lessons:380, badge:"New"},
+{id:13, name:"Teacher Amina",      rating:4.8,reviews:167,language:"English",price:16,subject:"English",        color:"#6d28d9", bio:"IELTS & TOEFL specialist. Helped 200+ students achieve their target band scores.", students:290,lessons:2200,badge:"Popular"},
+{id:14, name:"Teacher Warsan",     rating:4.7,reviews:91, language:"Somali", price:13,subject:"English",        color:"#5b21b6", bio:"English teacher for Somali families. Covers school curriculum and homework help.", students:160,lessons:1050,badge:null},
+{id:15, name:"Teacher Ifrah",      rating:4.9,reviews:188,language:"English",price:20,subject:"English",        color:"#4c1d95", bio:"Cambridge-certified English teacher. Business English and academic writing expert.", students:330,lessons:2600,badge:"Top Rated"},
+{id:16, name:"Teacher Bile",       rating:4.6,reviews:38, language:"Somali", price:10,subject:"English",        color:"#7c3aed", bio:"Passionate about helping new arrivals build English confidence for daily life.", students:60, lessons:310, badge:"New"},
+{id:17, name:"Teacher Ahmed",      rating:4.8,reviews:144,language:"Somali", price:17,subject:"Mathematics",    color:"#be123c", bio:"Maths teacher for GCSE, A-Level and university entrance. 95% pass rate.", students:245,lessons:1950,badge:"Popular"},
+{id:18, name:"Teacher Liban",      rating:4.7,reviews:76, language:"Somali", price:14,subject:"Mathematics",    color:"#9f1239", bio:"Makes maths fun and easy to understand. Primary and secondary level specialist.", students:125,lessons:830, badge:null},
+{id:19, name:"Teacher Sagal",      rating:4.9,reviews:195,language:"English",price:25,subject:"Mathematics",    color:"#881337", bio:"Oxford-educated mathematician. Specialist in advanced calculus and statistics.", students:350,lessons:2750,badge:"Top Rated"},
+{id:20, name:"Teacher Khalid",     rating:4.6,reviews:49, language:"Arabic", price:12,subject:"Mathematics",    color:"#b91c1c", bio:"Fun and patient maths tutor for young learners aged 6–14.", students:80, lessons:420, badge:"New"},
+];
 
-  {/* Filters */}
-  <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-    {[[lang,setLang,LANGUAGES],[price,setPrice,PRICES],[sort,setSort,SORTS]].map(([val,setter,opts],i)=>(
-      <select key={i} value={val} onChange={e=>setter(e.target.value)}
-        style={{padding:"7px 12px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:12.5,color:"#374151",background:"#fff",outline:"none",cursor:"pointer"}}>
-        {opts.map(o=><option key={o}>{o}</option>)}
-      </select>
-    ))}
-    <span style={{fontSize:12.5,color:"#94a3b8",marginLeft:"auto",fontWeight:500}}>{filtered.length} tutor{filtered.length!==1?"s":""} found</span>
-  </div>
+const SUBJECTS = ["All","Quran","Somali Language","Arabic","English","Mathematics"];
+const LANGS    = ["All Languages","Somali","Arabic","English"];
+const PRICES   = ["Any Price","Under $12","$12–$16","$17–$20","Over $20"];
+const SORTS    = ["Top Rated","Price: Low to High","Price: High to Low","Most Reviews"];
+const S_COLOR  = {Quran:"#1a4a7a","Somali Language":"#2d6a4f",Arabic:"#b45309",English:"#6d28d9",Mathematics:"#be123c"};
+const S_ICON   = {All:"📚",Quran:"🕌","Somali Language":"🇸🇴",Arabic:"🌙",English:"📖",Mathematics:"📐"};
+const BADGE_STYLES = {
+  "Top Rated": { class: "badge-top", label: "⭐ Top Rated" },
+  "Popular": { class: "badge-popular", label: "🔥 Popular" },
+  "New": { class: "badge-new", label: "✨ New" }
+};
 
-  {/* Grid */}
-  {filtered.length===0?(
-    <div style={{background:"#fff",borderRadius:14,padding:40,textAlign:"center",border:"1.5px solid #e2e8f0"}}>
-      <div style={{fontSize:40,marginBottom:10}}>🔍</div>
-      <div style={{fontWeight:600,fontSize:15,color:"#475569"}}>No tutors found</div>
-      <div style={{fontSize:13,color:"#94a3b8",marginTop:4}}>Try adjusting your filters</div>
+// ---------- SHARED COMPONENTS ----------
+const Avatar = ({ name, color, size = 40 }) => html`
+  <div style=${{ 
+    width: size, height: size, borderRadius: '50%', background: color,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#fff', fontWeight: 600, fontSize: size * 0.4, flexShrink: 0,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+  }}>${name[0]}</div>
+`;
+
+const Stars = ({ rating, size = 11 }) => html`
+  <span style=${{ color: '#f5a623', fontSize: size, letterSpacing: '1px' }}>
+    ${"★".repeat(Math.floor(rating))}
+    <span style=${{ color: '#d1d5db' }}>${"★".repeat(5 - Math.floor(rating))}</span>
+  </span>
+`;
+
+const Badge = ({ text }) => {
+  if (!text) return null;
+  const style = BADGE_STYLES[text];
+  return html`<span class="badge ${style?.class || ''}">${style?.label || text}</span>`;
+};
+
+const Logo = ({ large }) => html`
+  <div style=${{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <div style=${{
+      background: 'linear-gradient(145deg, #103a5e, #1e4b7a)',
+      borderRadius: large ? 16 : 12,
+      width: large ? 48 : 36,
+      height: large ? 48 : 36,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: '#fff',
+      fontSize: large ? 24 : 18,
+      boxShadow: '0 6px 12px rgba(23,55,83,0.2)'
+    }}>📚</div>
+    <span style=${{
+      fontFamily: "'Inter', sans-serif",
+      fontWeight: 700,
+      fontSize: large ? 24 : 18,
+      color: '#0c2d4b'
+    }}>Somali<span style=${{ color: '#2563eb' }}>Tutor</span></span>
+  </div>
+`;
+
+// ---------- LOGIN & SIGNUP (unchanged, but we can keep them as before) ----------
+function LoginPage({ onLogin, onSignup }) {
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const submit = () => {
+    if (!email || !pass) { setErr('Please fill in all fields.'); return; }
+    if (!email.includes('@')) { setErr('Please enter a valid email.'); return; }
+    setErr(''); setLoading(true);
+    setTimeout(() => { setLoading(false); onLogin({ name: email.split('@')[0], email }); }, 1000);
+  };
+  return html`
+    <div style=${{ minHeight: '100vh', display: 'flex' }}>
+      <div style=${{
+        flex: 1,
+        background: 'radial-gradient(circle at 20% 30%, #1f4a7a, #0b2b4a)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48
+      }}>
+        <div class="fade-up" style=${{ maxWidth: 380, color: 'white' }}>
+          <div style=${{ marginBottom: 32 }}><${Logo} large=${true} /></div>
+          <h1 style=${{ fontSize: 36, fontWeight: 700, marginBottom: 16 }}>Learn Somali,<br/>Quran & More</h1>
+          <p style=${{ opacity: 0.8, marginBottom: 32 }}>Connect with 20 expert tutors across 5 subjects.</p>
+          ${['🕌 Quran & Tajweed', '🇸🇴 Somali Language', '🌙 Arabic', '📖 English', '📐 Mathematics'].map(
+            f => html`<div style=${{
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: 40,
+              padding: '10px 20px',
+              marginBottom: 10,
+              fontSize: 15
+            }}>${f}</div>`
+          )}
+        </div>
+      </div>
+      <div style=${{
+        width: 460,
+        background: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 48
+      }}>
+        <div style=${{ width: '100%', maxWidth: 360 }}>
+          <h2 style=${{ fontSize: 28, fontWeight: 600, marginBottom: 8 }}>Welcome back</h2>
+          <p style=${{ color: '#64748b', marginBottom: 28 }}>Sign in to continue your learning journey</p>
+          ${err && html`<div style=${{
+            background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 12,
+            padding: '12px 16px', marginBottom: 20, color: '#b91c1c', fontSize: 13
+          }}>⚠️ ${err}</div>`}
+          <label style=${{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>Email address</label>
+          <input value=${email} onInput=${e => setEmail(e.target.value)} placeholder="you@example.com"
+            style=${{
+              width: '100%', padding: '12px 16px', border: '1.5px solid #e2e8f0',
+              borderRadius: 12, fontSize: 14, marginBottom: 16, background: '#f8fafc'
+            }}/>
+          <label style=${{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>Password</label>
+          <div style=${{ position: 'relative', marginBottom: 12 }}>
+            <input value=${pass} onInput=${e => setPass(e.target.value)} onKeyDown=${e => e.key === 'Enter' && submit()}
+              placeholder="Enter your password" type=${show ? 'text' : 'password'}
+              style=${{
+                width: '100%', padding: '12px 16px', border: '1.5px solid #e2e8f0',
+                borderRadius: 12, fontSize: 14, background: '#f8fafc'
+              }}/>
+            <button onClick=${() => setShow(!show)} style=${{
+              position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#94a3b8'
+            }}>${show ? '🙈' : '👁️'}</button>
+          </div>
+          <div style=${{ textAlign: 'right', marginBottom: 24 }}>
+            <button style=${{ background: 'none', border: 'none', color: '#2563eb', fontSize: 13, cursor: 'pointer' }}>Forgot password?</button>
+          </div>
+          <button class="btn-primary" onClick=${submit} disabled=${loading}
+            style=${{ width: '100%', opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
+            ${loading ? 'Signing in...' : 'Sign In →'}
+          </button>
+          <p style=${{ textAlign: 'center', marginTop: 24, fontSize: 14, color: '#64748b' }}>
+            Don't have an account? <button onClick=${onSignup} style=${{
+              background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, cursor: 'pointer'
+            }}>Sign up free</button>
+          </p>
+        </div>
+      </div>
     </div>
-  ):(
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-      {filtered.map(t=>(
-        <div key={t.id} className="tutor-card" onClick={()=>{setSelected(t);setBooked(false);}}
-          style={{background:"#fff",borderRadius:14,padding:16,cursor:"pointer",border:selected?.id===t.id?"2px solid #2563eb":"2px solid transparent",boxShadow:"0 1px 6px rgba(0,0,0,0.06)"}}>
-          <div style={{display:"flex",gap:11,alignItems:"flex-start",marginBottom:10}}>
-            <Avatar name={t.name} color={t.color} size={44}/>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap",marginBottom:2}}>
-                <span style={{fontWeight:700,fontSize:13.5,color:"#1e293b"}}>{t.name}</span>
-                <Badge text={t.badge}/>
+  `;
+}
+
+function SignupPage({ onSignup, onLogin }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [role, setRole] = useState('student');
+  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const submit = () => {
+    if (!name || !email || !pass) { setErr('Please fill in all fields.'); return; }
+    if (!email.includes('@')) { setErr('Please enter a valid email.'); return; }
+    if (pass.length < 6) { setErr('Password must be at least 6 characters.'); return; }
+    setErr(''); setLoading(true);
+    setTimeout(() => { setLoading(false); onSignup({ name, email }); }, 1000);
+  };
+  const strength = pass.length < 4 ? 'Too short' : pass.length < 6 ? 'Weak' : pass.length < 8 ? 'Good' : 'Strong';
+  const strengthColor = pass.length >= 8 ? '#22c55e' : '#94a3b8';
+  return html`
+    <div style=${{ minHeight: '100vh', display: 'flex' }}>
+      <div style=${{
+        flex: 1,
+        background: 'radial-gradient(circle at 20% 30%, #1f4a7a, #0b2b4a)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48
+      }}>
+        <div class="fade-up" style=${{ maxWidth: 360, color: 'white' }}>
+          <div style=${{ marginBottom: 32 }}><${Logo} large=${true} /></div>
+          <h1 style=${{ fontSize: 32, fontWeight: 700, marginBottom: 16 }}>Join thousands of Somali learners</h1>
+          <p style=${{ opacity: 0.8, marginBottom: 32 }}>20 expert tutors. 5 subjects. Start free today.</p>
+          <div style=${{ display: 'flex', gap: 16 }}>
+            ${[['20+', 'Tutors'], ['10K+', 'Students'], ['4.8★', 'Rating']].map(([n, l]) => html`
+              <div style=${{
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: 16,
+                padding: '16px 12px',
+                textAlign: 'center',
+                flex: 1
+              }}>
+                <div style=${{ fontSize: 22, fontWeight: 700 }}>${n}</div>
+                <div style=${{ fontSize: 12, opacity: 0.8 }}>${l}</div>
               </div>
-              <div style={{fontSize:11,color:"#64748b",marginBottom:3}}><Stars rating={t.rating} size={10}/> {t.rating} ({t.reviews})</div>
-              <span style={{background:SUBJ_COLORS[t.subject]+"22",color:SUBJ_COLORS[t.subject],padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700}}>{t.subject}</span>
-              <span style={{color:"#94a3b8",fontSize:10,marginLeft:6}}>· {t.language}</span>
-            </div>
-          </div>
-          <p style={{fontSize:11.5,color:"#64748b",lineHeight:1.55,marginBottom:10,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{t.bio}</p>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{display:"flex",gap:10}}>
-              <span style={{fontSize:10.5,color:"#94a3b8"}}>👥 {t.students}</span>
-              <span style={{fontSize:10.5,color:"#94a3b8"}}>📚 {t.lessons}</span>
-            </div>
-            <span style={{fontWeight:700,fontSize:14,color:"#1a4a7a"}}>${t.price}<span style={{fontSize:10,color:"#94a3b8",fontWeight:400}}>/hr</span></span>
+            `)}
           </div>
         </div>
-      ))}
+      </div>
+      <div style=${{
+        width: 480,
+        background: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 48,
+        overflowY: 'auto'
+      }}>
+        <div style=${{ width: '100%', maxWidth: 400 }}>
+          <h2 style=${{ fontSize: 28, fontWeight: 600, marginBottom: 8 }}>Create your account</h2>
+          <p style=${{ color: '#64748b', marginBottom: 24 }}>Start with a free trial — no credit card needed</p>
+          <div style=${{ display: 'flex', gap: 12, marginBottom: 24 }}>
+            ${[
+              { k: 'student', i: '🎓', l: "I'm a Student" },
+              { k: 'tutor', i: '👨‍🏫', l: "I'm a Tutor" }
+            ].map(r => html`
+              <button onClick=${() => setRole(r.k)}
+                style=${{
+                  flex: 1,
+                  padding: '12px',
+                  border: role === r.k ? '2px solid #2563eb' : '1.5px solid #e2e8f0',
+                  borderRadius: 14,
+                  background: role === r.k ? '#eff6ff' : '#fff',
+                  fontWeight: 600,
+                  color: role === r.k ? '#1e3a8a' : '#64748b',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8
+                }}>${r.i} ${r.l}</button>
+            `)}
+          </div>
+          ${err && html`<div style=${{
+            background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 12,
+            padding: '12px 16px', marginBottom: 20, color: '#b91c1c', fontSize: 13
+          }}>⚠️ ${err}</div>`}
+          <label style=${{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>Full name</label>
+          <input value=${name} onInput=${e => setName(e.target.value)} placeholder="Ayaan Hassan"
+            style=${{
+              width: '100%', padding: '12px 16px', border: '1.5px solid #e2e8f0',
+              borderRadius: 12, fontSize: 14, marginBottom: 16, background: '#f8fafc'
+            }}/>
+          <label style=${{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>Email address</label>
+          <input value=${email} onInput=${e => setEmail(e.target.value)} placeholder="you@example.com" type="email"
+            style=${{
+              width: '100%', padding: '12px 16px', border: '1.5px solid #e2e8f0',
+              borderRadius: 12, fontSize: 14, marginBottom: 16, background: '#f8fafc'
+            }}/>
+          <label style=${{ fontSize: 13, fontWeight: 600, marginBottom: 4, display: 'block' }}>Password</label>
+          <div style=${{ position: 'relative', marginBottom: pass ? 8 : 20 }}>
+            <input value=${pass} onInput=${e => setPass(e.target.value)} onKeyDown=${e => e.key === 'Enter' && submit()}
+              placeholder="At least 6 characters" type=${show ? 'text' : 'password'}
+              style=${{
+                width: '100%', padding: '12px 16px', border: '1.5px solid #e2e8f0',
+                borderRadius: 12, fontSize: 14, background: '#f8fafc'
+              }}/>
+            <button onClick=${() => setShow(!show)} style=${{
+              position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#94a3b8'
+            }}>${show ? '🙈' : '👁️'}</button>
+          </div>
+          ${pass && html`
+            <div style=${{ marginBottom: 20 }}>
+              <div style=${{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                ${[1,2,3,4].map(i => html`<div style=${{
+                  flex: 1, height: 4, borderRadius: 4,
+                  background: pass.length >= i*2 ? '#22c55e' : '#e2e8f0'
+                }}></div>`)}
+              </div>
+              <span style=${{ fontSize: 12, color: strengthColor }}>${strength} password</span>
+            </div>
+          `}
+          <button class="btn-primary" onClick=${submit} disabled=${loading}
+            style=${{ width: '100%', opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
+            ${loading ? 'Creating account...' : 'Create Free Account →'}
+          </button>
+          <p style=${{ textAlign: 'center', marginTop: 24, fontSize: 14, color: '#64748b' }}>
+            Already have an account? <button onClick=${onLogin} style=${{
+              background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, cursor: 'pointer'
+            }}>Sign in</button>
+          </p>
+        </div>
+      </div>
     </div>
-  )}
-</div>
+  `;
+}
 
-{/* Right panel */}
-<div style={{width:295,padding:"20px 20px 20px 0",overflowY:"auto",display:"flex",flexDirection:"column",gap:16,flexShrink:0}}>
-  {selected&&(
-    <div style={{background:"#fff",borderRadius:16,padding:18,border:"1.5px solid #e2e8f0",boxShadow:"0 2px 12px rgba(0,0,0,0.05)"}}>
-      <div style={{display:"flex",gap:11,alignItems:"center",marginBottom:11}}>
-        <Avatar name={selected.name} color={selected.color} size={48}/>
-        <div>
-          <div style={{fontWeight:700,fontSize:14.5,color:"#1e293b"}}>{selected.name}</div>
-          <div style={{fontSize:11.5}}><Stars rating={selected.rating}/> <span style={{color:"#64748b"}}>{selected.rating} ({selected.reviews})</span></div>
-          <Badge text={selected.badge}/>
+// ---------- DASHBOARD (CLEAN VERSION) ----------
+function Dashboard({ user, onLogout }) {
+  const [nav, setNav] = useState('Find Tutors');
+  const [selected, setSelected] = useState(TUTORS[0]);
+  const [payment, setPayment] = useState('card');
+  const [slot, setSlot] = useState('4:30 PM - 5:00 PM');
+  const [booked, setBooked] = useState(false);
+  const [search, setSearch] = useState('');
+  const [subject, setSubject] = useState('All');
+  const [lang, setLang] = useState('All Languages');
+  const [price, setPrice] = useState('Any Price');
+  const [sort, setSort] = useState('Top Rated');
+
+  const firstName = user.name.charAt(0).toUpperCase() + user.name.slice(1);
+
+  const filtered = useMemo(() => {
+    let list = TUTORS.filter(t => {
+      const matchSearch = !search || t.name.toLowerCase().includes(search.toLowerCase()) ||
+                          t.subject.toLowerCase().includes(search.toLowerCase()) ||
+                          t.bio.toLowerCase().includes(search.toLowerCase());
+      const matchSubject = subject === 'All' || t.subject === subject;
+      const matchLang = lang === 'All Languages' || t.language === lang;
+      const matchPrice = price === 'Any Price' ||
+        (price === 'Under $12' && t.price < 12) ||
+        (price === '$12–$16' && t.price >= 12 && t.price <= 16) ||
+        (price === '$17–$20' && t.price >= 17 && t.price <= 20) ||
+        (price === 'Over $20' && t.price > 20);
+      return matchSearch && matchSubject && matchLang && matchPrice;
+    });
+    if (sort === 'Top Rated') list.sort((a,b) => b.rating - a.rating);
+    else if (sort === 'Price: Low to High') list.sort((a,b) => a.price - b.price);
+    else if (sort === 'Price: High to Low') list.sort((a,b) => b.price - a.price);
+    else list.sort((a,b) => b.reviews - a.reviews);
+    return list;
+  }, [search, subject, lang, price, sort]);
+
+  const navItems = [
+    { label: 'Dashboard', icon: '🏠' },
+    { label: 'Find Tutors', icon: '🔍' },
+    { label: 'My Lessons', icon: '📅' },
+    { label: 'Messages', icon: '💬' },
+    { label: 'Payments', icon: '💳' },
+    { label: 'Settings', icon: '⚙️' }
+  ];
+
+  return html`
+    <div style=${{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#f8fafc' }}>
+      <!-- Top bar -->
+      <div style=${{
+        background: '#ffffff',
+        borderBottom: '1px solid #e9edf2',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 24px',
+        height: 64,
+        gap: 24,
+        flexShrink: 0
+      }}>
+        <div style=${{ minWidth: 180 }}><${Logo} /></div>
+        <div style=${{ flex: 1, maxWidth: 400, position: 'relative' }}>
+          <span style=${{
+            position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+            color: '#94a3b8', fontSize: 15
+          }}>🔍</span>
+          <input value=${search} onInput=${e => setSearch(e.target.value)}
+            placeholder="Search tutors, subjects..."
+            style=${{
+              width: '100%', padding: '10px 16px 10px 40px',
+              border: '1.5px solid #e2e8f0', borderRadius: 40,
+              fontSize: 14, background: '#f1f5f9', outline: 'none'
+            }}/>
+        </div>
+        <div style=${{ flex: 1 }}></div>
+        ${['✉️', '🔔'].map(ic => html`
+          <button style=${{
+            background: '#f1f5f9', border: 'none', borderRadius: '50%',
+            width: 38, height: 38, fontSize: 18, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>${ic}</button>
+        `)}
+        <${Avatar} name=${firstName} color="#7c3aed" size=38 />
+        <span style=${{ fontSize: 14, fontWeight: 500 }}>${firstName}</span>
+      </div>
+
+      <!-- Main layout -->
+      <div style=${{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <!-- Sidebar -->
+        <aside style=${{
+          width: 220,
+          background: '#ffffff',
+          borderRight: '1px solid #e9edf2',
+          padding: '24px 0',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0
+        }}>
+          <nav style=${{ flex: 1 }}>
+            ${navItems.map(item => {
+              const active = nav === item.label;
+              return html`
+                <button onClick=${() => setNav(item.label)}
+                  style=${{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    width: '100%', padding: '10px 20px',
+                    background: active ? '#f0f4fe' : 'transparent',
+                    border: 'none', borderLeft: active ? '3px solid #2563eb' : '3px solid transparent',
+                    color: active ? '#1e3a8a' : '#64748b',
+                    fontWeight: active ? 600 : 500,
+                    fontSize: 14, textAlign: 'left', cursor: 'pointer'
+                  }}>
+                  <span style=${{ fontSize: 18 }}>${item.icon}</span>
+                  ${item.label}
+                </button>
+              `;
+            })}
+          </nav>
+          <div style=${{ padding: '0 16px 16px' }}>
+            <button onClick=${onLogout} style=${{
+              width: '100%', padding: '10px',
+              background: '#f1f5f9', border: 'none', borderRadius: 40,
+              color: '#475569', fontWeight: 500, fontSize: 13,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              cursor: 'pointer'
+            }}>🚪 Log out</button>
+          </div>
+          <div style=${{
+            margin: '0 16px 20px', background: '#f8fafc',
+            borderRadius: 20, padding: 16, border: '1px solid #e9edf2'
+          }}>
+            <div style=${{ fontWeight: 600, fontSize: 13, marginBottom: 12 }}>Upcoming lesson</div>
+            ${TUTORS.slice(0,2).map(t => html`
+              <div style=${{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <${Avatar} name=${t.name} color=${t.color} size=32 />
+                <div>
+                  <div style=${{ fontWeight: 600, fontSize: 13 }}>${t.name}</div>
+                  <div style=${{ fontSize: 11, color: '#64748b' }}>$${t.price}/hr · ${t.subject}</div>
+                </div>
+              </div>
+            `)}
+            <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+              <span style=${{ fontSize: 12, color: '#64748b' }}>Today 4:30 PM</span>
+              <button style=${{
+                background: '#22c55e', border: 'none', borderRadius: 30,
+                padding: '6px 14px', color: '#fff', fontWeight: 600, fontSize: 12,
+                cursor: 'pointer'
+              }}>Join</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main content -->
+        <div style=${{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+          <div style=${{ marginBottom: 24 }}>
+            <h1 style=${{ fontSize: 28, fontWeight: 700, color: '#0f172a' }}>Welcome back, ${firstName} 👋</h1>
+            <p style=${{ color: '#64748b', marginTop: 4 }}>Browse ${TUTORS.length} expert tutors across 5 subjects</p>
+          </div>
+
+          <!-- Subject pills -->
+          <div style=${{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+            ${SUBJECTS.map(s => html`
+              <button onClick=${() => setSubject(s)}
+                class="pill ${subject === s ? 'active' : ''}"
+                style=${{
+                  background: subject === s ? '#1e3a8a' : '#fff',
+                  borderColor: subject === s ? '#1e3a8a' : '#e2e8f0',
+                  color: subject === s ? '#fff' : '#475569'
+                }}>
+                ${S_ICON[s]} ${s}
+              </button>
+            `)}
+          </div>
+
+          <!-- Filter row -->
+          <div style=${{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 24 }}>
+            <select value=${lang} onChange=${e => setLang(e.target.value)}
+              style=${{
+                padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 40,
+                fontSize: 13, background: '#fff', cursor: 'pointer'
+              }}>
+              ${LANGS.map(o => html`<option>${o}</option>`)}
+            </select>
+            <select value=${price} onChange=${e => setPrice(e.target.value)}
+              style=${{
+                padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 40,
+                fontSize: 13, background: '#fff', cursor: 'pointer'
+              }}>
+              ${PRICES.map(o => html`<option>${o}</option>`)}
+            </select>
+            <select value=${sort} onChange=${e => setSort(e.target.value)}
+              style=${{
+                padding: '8px 14px', border: '1.5px solid #e2e8f0', borderRadius: 40,
+                fontSize: 13, background: '#fff', cursor: 'pointer'
+              }}>
+              ${SORTS.map(o => html`<option>${o}</option>`)}
+            </select>
+            <span style=${{ marginLeft: 'auto', fontSize: 13, color: '#64748b', fontWeight: 500 }}>
+              ${filtered.length} tutor${filtered.length !== 1 ? 's' : ''} found
+            </span>
+          </div>
+
+          <!-- Tutor grid -->
+          ${filtered.length === 0 ? html`
+            <div style=${{
+              background: '#fff', borderRadius: 24, padding: 48,
+              textAlign: 'center', border: '1px solid #e9edf2'
+            }}>
+              <div style=${{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+              <h3 style=${{ fontSize: 18, fontWeight: 600 }}>No tutors found</h3>
+              <p style=${{ color: '#64748b', marginTop: 8 }}>Try adjusting your filters</p>
+            </div>
+          ` : html`
+            <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              ${filtered.map(t => html`
+                <div class="card" onClick=${() => { setSelected(t); setBooked(false); }}
+                  style=${{
+                    padding: 20,
+                    border: selected?.id === t.id ? '2px solid #2563eb' : '1px solid #e9edf2',
+                    cursor: 'pointer'
+                  }}>
+                  <div style=${{ display: 'flex', gap: 16, marginBottom: 12 }}>
+                    <${Avatar} name=${t.name} color=${t.color} size=48 />
+                    <div>
+                      <div style=${{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style=${{ fontWeight: 700, fontSize: 16 }}>${t.name}</span>
+                        <${Badge} text=${t.badge} />
+                      </div>
+                      <div style=${{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        <${Stars} rating=${t.rating} />
+                        <span style=${{ fontSize: 12, color: '#64748b' }}>${t.rating} (${t.reviews})</span>
+                      </div>
+                      <div style=${{ marginTop: 6 }}>
+                        <span style=${{
+                          background: S_COLOR[t.subject] + '20',
+                          color: S_COLOR[t.subject],
+                          padding: '4px 10px',
+                          borderRadius: 30,
+                          fontSize: 12,
+                          fontWeight: 600
+                        }}>${S_ICON[t.subject]} ${t.subject}</span>
+                        <span style=${{ marginLeft: 8, fontSize: 12, color: '#64748b' }}>· ${t.language}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p style=${{ fontSize: 13, color: '#475569', lineHeight: 1.5, marginBottom: 16 }}>${t.bio}</p>
+                  <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style=${{ display: 'flex', gap: 16 }}>
+                      <span style=${{ fontSize: 12, color: '#64748b' }}>👥 ${t.students}</span>
+                      <span style=${{ fontSize: 12, color: '#64748b' }}>📚 ${t.lessons}</span>
+                    </div>
+                    <span style=${{ fontWeight: 700, fontSize: 18, color: '#0f2b4b' }}>
+                      $${t.price}<span style=${{ fontSize: 13, fontWeight: 400, color: '#94a3b8' }}>/hr</span>
+                    </span>
+                  </div>
+                </div>
+              `)}
+            </div>
+          `}
+        </div>
+
+        <!-- Right panel (booking & live) -->
+        <div style=${{
+          width: 320,
+          padding: '24px 24px 24px 0',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 20,
+          flexShrink: 0
+        }}>
+          ${selected && html`
+            <div class="card" style=${{ padding: 20 }}>
+              <div style=${{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                <${Avatar} name=${selected.name} color=${selected.color} size=52 />
+                <div>
+                  <div style=${{ fontWeight: 700, fontSize: 16 }}>${selected.name}</div>
+                  <div style=${{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                    <${Stars} rating=${selected.rating} />
+                    <span style=${{ fontSize: 12, color: '#64748b' }}>${selected.rating} (${selected.reviews})</span>
+                  </div>
+                  <div style=${{ marginTop: 6 }}><${Badge} text=${selected.badge} /></div>
+                </div>
+              </div>
+              <p style=${{ fontSize: 13, color: '#475569', marginBottom: 16 }}>${selected.bio}</p>
+              <div style=${{ display: 'flex', gap: 12, marginBottom: 20 }}>
+                <div style=${{ flex: 1, background: '#f1f5f9', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+                  <div style=${{ fontSize: 20, marginBottom: 4 }}>👥</div>
+                  <div style=${{ fontSize: 13, fontWeight: 600 }}>${selected.students}</div>
+                  <div style=${{ fontSize: 11, color: '#64748b' }}>students</div>
+                </div>
+                <div style=${{ flex: 1, background: '#f1f5f9', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+                  <div style=${{ fontSize: 20, marginBottom: 4 }}>📚</div>
+                  <div style=${{ fontSize: 13, fontWeight: 600 }}>${selected.lessons}</div>
+                  <div style=${{ fontSize: 11, color: '#64748b' }}>lessons</div>
+                </div>
+              </div>
+
+              <label style=${{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>Select time</label>
+              <select value=${slot} onChange=${e => { setSlot(e.target.value); setBooked(false); }}
+                style=${{
+                  width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0',
+                  borderRadius: 12, fontSize: 13, marginBottom: 16, background: '#f8fafc'
+                }}>
+                <option>4:30 PM – 5:00 PM</option>
+                <option>5:00 PM – 5:30 PM</option>
+                <option>6:00 PM – 6:30 PM</option>
+                <option>7:00 PM – 7:30 PM</option>
+              </select>
+
+              <label style=${{ fontSize: 13, fontWeight: 600, marginBottom: 6, display: 'block' }}>Payment method</label>
+              ${[
+                { k: 'card', i: '💳', l: 'Credit / Debit Card' },
+                { k: 'paypal', i: '🅿️', l: 'PayPal' },
+                { k: 'mobile', i: '📱', l: 'Mobile Money' }
+              ].map(pm => html`
+                <button onClick=${() => setPayment(pm.k)}
+                  style=${{
+                    display: 'flex', alignItems: 'center', width: '100%', padding: '10px 14px',
+                    border: payment === pm.k ? '2px solid #2563eb' : '1.5px solid #e2e8f0',
+                    borderRadius: 12, background: payment === pm.k ? '#eff6ff' : '#fff',
+                    cursor: 'pointer', marginBottom: 8, gap: 10
+                  }}>
+                  <span style=${{ fontSize: 18 }}>${pm.i}</span>
+                  <span style=${{ flex: 1, fontSize: 13, fontWeight: 500, textAlign: 'left' }}>${pm.l}</span>
+                </button>
+              `)}
+
+              <button class="btn-primary" onClick=${() => setBooked(true)}
+                style=${{
+                  width: '100%', marginTop: 8,
+                  background: booked ? '#22c55e' : undefined,
+                  boxShadow: booked ? 'none' : undefined
+                }}>
+                ${booked ? '✓ Booked!' : `Confirm & Pay $${selected.price}`}
+              </button>
+              ${!booked && html`
+                <button class="btn-secondary" style=${{ width: '100%', marginTop: 10 }}>
+                  🎁 Free trial lesson
+                </button>
+              `}
+            </div>
+          `}
+
+          <!-- Live lesson (light card, no dark box) -->
+          <div class="card" style=${{ padding: 20 }}>
+            <h3 style=${{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Live lesson</h3>
+            <div style=${{
+              background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
+              borderRadius: 20,
+              padding: 16,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              position: 'relative'
+            }}>
+              <div style=${{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <${Avatar} name="K" color="#2563eb" size=48 />
+                <span style=${{ fontSize: 11, fontWeight: 500, color: '#1e3a8a' }}>Teacher</span>
+              </div>
+              <div style=${{
+                background: '#fff',
+                borderRadius: 16,
+                padding: '12px 16px',
+                display: 'flex',
+                gap: 12,
+                boxShadow: '0 4px 8px rgba(0,0,0,0.02)'
+              }}>
+                <span style=${{ fontSize: 24, fontWeight: 700 }}>بَ</span>
+                <span style=${{ fontSize: 24, fontWeight: 700 }}>ثَ</span>
+              </div>
+              <div style=${{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <${Avatar} name=${firstName[0]} color="#7c3aed" size=40 />
+                <span style=${{ fontSize: 11, fontWeight: 500, color: '#6b21a8' }}>You</span>
+              </div>
+              <div style=${{
+                position: 'absolute', top: 8, left: 8,
+                background: '#ef4444', color: '#fff',
+                fontSize: 10, fontWeight: 700,
+                padding: '4px 10px', borderRadius: 30,
+                display: 'flex', alignItems: 'center', gap: 4
+              }}>
+                <span style=${{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'pulse 1s infinite' }}></span>
+                LIVE
+              </div>
+            </div>
+            <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+              <button style=${{
+                background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                width: 40, height: 40, fontSize: 18, cursor: 'pointer'
+              }}>🎙️</button>
+              <button style=${{
+                background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                width: 40, height: 40, fontSize: 18, cursor: 'pointer'
+              }}>📹</button>
+              <button style=${{
+                background: '#f1f5f9', border: 'none', borderRadius: '50%',
+                width: 40, height: 40, fontSize: 18, cursor: 'pointer'
+              }}>💬</button>
+              <button style=${{
+                background: '#ef4444', border: 'none', borderRadius: 40,
+                padding: '8px 18px', color: '#fff', fontWeight: 600, fontSize: 13,
+                cursor: 'pointer'
+              }}>End</button>
+            </div>
+          </div>
         </div>
       </div>
-      <p style={{fontSize:11.5,color:"#64748b",lineHeight:1.6,marginBottom:11}}>{selected.bio}</p>
-      <div style={{display:"flex",gap:8,marginBottom:14}}>
-        {[["👥",selected.students+" students"],["📚",selected.lessons+" lessons"]].map(([ic,v],i)=>(
-          <div key={i} style={{flex:1,background:"#f8fafc",borderRadius:8,padding:"8px",textAlign:"center"}}>
-            <div style={{fontSize:14}}>{ic}</div><div style={{fontSize:10,color:"#64748b",fontWeight:500,marginTop:1}}>{v}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:7}}>Choose a time</div>
-      <select value={slot} onChange={e=>{setSlot(e.target.value);setBooked(false);}}
-        style={{width:"100%",padding:"9px 12px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:13,marginBottom:12,background:"#f8fafc",outline:"none"}}>
-        <option>4:30 PM - 5:00 PM</option><option>5:00 PM - 5:30 PM</option><option>6:00 PM - 6:30 PM</option><option>7:00 PM - 7:30 PM</option>
-      </select>
-      <div style={{fontWeight:700,fontSize:13,color:"#1e293b",marginBottom:7}}>Payment</div>
-      {[{key:"card",icon:"💳",label:"Credit / Debit Card"},{key:"paypal",icon:"🅿️",label:"PayPal"},{key:"mobile",icon:"📱",label:"Mobile Money"}].map(pm=>(
-        <button key={pm.key} onClick={()=>setPayment(pm.key)}
-          style={{display:"flex",alignItems:"center",width:"100%",padding:"9px 11px",border:payment===pm.key?"2px solid #2563eb":"1.5px solid #e2e8f0",borderRadius:10,background:payment===pm.key?"#eff6ff":"#fff",cursor:"pointer",marginBottom:6,gap:9}}>
-          <span style={{fontSize:16}}>{pm.icon}</span><span style={{flex:1,fontSize:13,fontWeight:500,color:"#1e293b",textAlign:"left"}}>{pm.label}</span>
-        </button>
-      ))}
-      <button onClick={()=>setBooked(true)}
-        style={{width:"100%",padding:"12px",marginTop:6,background:booked?"#22c55e":"linear-gradient(135deg,#1a4a7a,#2563eb)",color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 14px rgba(37,99,235,0.25)",marginBottom:8}}>
-        {booked?"✓ Booked!":`Confirm & Pay $${selected.price}`}
-      </button>
-      {!booked&&<button style={{width:"100%",padding:"9px",background:"none",border:"1.5px solid #22c55e",borderRadius:12,fontSize:13,fontWeight:700,cursor:"pointer",color:"#16a34a"}}>🎁 Free Trial Lesson</button>}
     </div>
-  )}
-  {/* Live */}
-  <div style={{background:"#0f172a",borderRadius:16,padding:16}}>
-    <h2 style={{fontSize:14,fontWeight:700,color:"#f1f5f9",margin:"0 0 12px"}}>Live Lesson</h2>
-    <div style={{background:"linear-gradient(135deg,#1e3a5f,#0f2744)",borderRadius:12,height:130,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 14px",position:"relative"}}>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-        <Avatar name="Khadra" color="#2563eb" size={46}/>
-        <span style={{color:"#93c5fd",fontSize:10}}>Teacher</span>
-      </div>
-      <div style={{background:"rgba(255,255,255,0.95)",borderRadius:10,padding:"10px 14px",display:"flex",gap:10}}>
-        <span style={{fontSize:22,fontWeight:700}}>بَ</span><span style={{fontSize:22,fontWeight:700}}>ثَ</span>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-        <Avatar name={firstName} color="#7c3aed" size={36}/>
-        <span style={{color:"#c4b5fd",fontSize:10}}>{firstName}</span>
-      </div>
-      <div style={{position:"absolute",top:8,left:8,background:"#ef4444",color:"#fff",fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:4,display:"flex",alignItems:"center",gap:3}}>
-        <div style={{width:5,height:5,borderRadius:"50%",background:"#fff",animation:"pulse 1s infinite"}}/>LIVE
-      </div>
-    </div>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:11}}>
-      {["🎙️","📹","💬"].map((ic,i)=><button key={i} style={{background:"#1e293b",border:"none",color:"#94a3b8",fontSize:14,borderRadius:8,width:32,height:32,cursor:"pointer"}}>{ic}</button>)}
-      <button style={{background:"#ef4444",border:"none",color:"#fff",fontSize:12,fontWeight:700,borderRadius:8,padding:"7px 13px",cursor:"pointer"}}>End</button>
-    </div>
-  </div>
-</div>
+  `;
+}
+
+// ---------- ROOT ----------
+function App() {
+  const [page, setPage] = useState('login');
+  const [user, setUser] = useState(null);
+  if (page === 'login') return html`<${LoginPage} onLogin=${u => { setUser(u); setPage('dashboard'); }} onSignup=${() => setPage('signup')} />`;
+  if (page === 'signup') return html`<${SignupPage} onSignup=${u => { setUser(u); setPage('dashboard'); }} onLogin=${() => setPage('login')} />`;
+  return html`<${Dashboard} user=${user} onLogout=${() => { setUser(null); setPage('login'); }} />`;
+}
+
+render(html`<${App} />`, document.getElementById('app'));
+</script>
+</body>
+</html>
